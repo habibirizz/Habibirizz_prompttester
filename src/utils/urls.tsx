@@ -28,6 +28,8 @@ export const URLS = {
   deleteScenarioAndDetach: `${baseUrl}/delete-scenario`,
   deleteRelationshipLevelAndDetach: `${baseUrl}/delete-relationship-level`,
   getAISettings: `${baseUrl}/ai-settings`,
+  llmModels: `${baseUrl}/llm-models`,
+  promptCoverage: `${baseUrl}/prompt-coverage`,
   updateAISettings: `${baseUrl}/ai-settings`,
   getMergedConvoData: `${commonBaseUrl}/get-merged-data`,
 

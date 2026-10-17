@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getApi, postApi } from "../utils/api";
+import ModelPicker from "../components/ModelPicker";
+import { catalogPrefixFor, toCatalogId, toProviderModelId } from "../utils/modelId";
 import { URLS } from "../utils/urls";
 import { toast } from "sonner";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
@@ -34,9 +36,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [gptModel, setGptModel] = useState(() => {
     if (providerLoading) return "";
 
-    if (provider === "GEMINI") return "gemini-2.0-flash";
+    if (provider === "GEMINI") return "gemini-3.8-flash";
     if (provider === "OPENAI") return settings.gptModel || "gpt-4o-mini";
-    return "gemini-2.0-flash";
+    return "gemini-3.8-flash";
   });
   const [temperature, setTemperature] = useState(settings.temperature);
 
@@ -331,7 +333,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   useEffect(() => {
     if (!providerLoading && provider) {
       const defaultModel =
-        provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+        provider === "GEMINI" ? "gemini-3.8-flash" : "gpt-4o-mini";
 
       if (
         !gptModel ||
@@ -348,7 +350,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   useEffect(() => {
     if (!providerLoading && provider && gptModel) {
       const defaultModel =
-        provider === "GEMINI" ? "gemini-2.0-flash" : "gpt-4o-mini";
+        provider === "GEMINI" ? "gemini-3.8-flash" : "gpt-4o-mini";
 
       if (
         (provider === "GEMINI" && !gptModel.includes("gemini")) ||
@@ -712,38 +714,16 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
                 {provider && provider === "OPENAI" ? "GPT Model" : "Gemini Model"}
               </label>
-              <select
-                value={gptModel}
-                onChange={(e) => {
-                  setGptModel(e.target.value);
-                  updateSettings({ gptModel: e.target.value });
+              <ModelPicker
+                label=""
+                value={toCatalogId(gptModel, provider)}
+                idPrefix={catalogPrefixFor(provider)}
+                onChange={(catalogId) => {
+                  const wire = toProviderModelId(catalogId, provider);
+                  setGptModel(wire);
+                  updateSettings({ gptModel: wire });
                 }}
-                className="w-full p-3 bg-gray-700/50 rounded-xl outline-none transition-all duration-300 border border-gray-600/50 hover:border-blue-500/50 focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm"
-                required
-              >
-                {provider === "OPENAI" ? (
-                  <>
-                    <option value="gpt-5">GPT-5</option>
-                    <option value="gpt-4o-mini">GPT-4o Mini</option>
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                    <option value="gemini-3-pro-preview">
-                      Gemini 3 Pro Preview
-                    </option>
-                    <option value="gemini-3-flash-preview">
-                      Gemini 3 Flash Preview
-                    </option>
-                    <option value="gemini-pro-latest">Gemini Pro Latest</option>
-                  </>
-                )}
-              </select>
+              />
             </motion.div>
 
             <motion.div
