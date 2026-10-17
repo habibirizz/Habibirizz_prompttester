@@ -419,7 +419,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
       newErrors.dialect = "Dialect is required";
 
     if (!tone) newErrors.tone = "Tone is required";
-    if (!femaleTone) newErrors.femaleTone = "Female tone is required";
+    // No Female Tone field exists in this form, and the API has no such
+    // parameter — only maleTone is sent. Requiring it blocked submission
+    // outright for anyone without a stale value saved in their browser.
     if (!scenarioCategory) newErrors.scenarioCategory = "Scenario is required";
     if (!relationshipLevel)
       newErrors.relationshipLevel = "Relationship level is required";
