@@ -1,7 +1,11 @@
-// const baseUrl = "http://localhost:8001/api/admin";
-// const commonBaseUrl = "http://localhost:8001/api";
-const baseUrl = "https://api.habibirizz.app/api/admin";
-const commonBaseUrl = "https://api.habibirizz.app/api";
+// Set VITE_API_BASE_URL in .env to point at a local backend. Falls back to
+// production so nothing breaks if the file is missing.
+const API_ROOT = (
+  import.meta.env.VITE_API_BASE_URL || "https://api.habibirizz.app"
+).replace(/\/+$/, "");
+
+const baseUrl = `${API_ROOT}/api/admin`;
+const commonBaseUrl = `${API_ROOT}/api`;
 
 export const URLS = {
   login: `${baseUrl}/login`,
