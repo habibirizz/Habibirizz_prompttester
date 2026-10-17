@@ -4,12 +4,14 @@ import { postApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAIProvider } from "../context/AIProviderContext";
 
 function LoginPage() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { refreshProvider } = useAIProvider();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -21,6 +23,11 @@ function LoginPage() {
         const adminRole = response?.data?.data?.role;
         localStorage.setItem("token", token);
         localStorage.setItem("adminRole", adminRole);
+
+        // The provider is fetched once when the app mounts, which is before a
+        // token exists. Without this it stayed empty for the whole session and
+        // the model dropdown had no default.
+        await refreshProvider();
 
         navigate("/prompt-testing");
       } else {

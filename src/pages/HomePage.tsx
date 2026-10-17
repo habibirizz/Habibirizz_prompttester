@@ -336,7 +336,6 @@ useEffect(() => {
         language: language?.toLowerCase() ?? "",
         dialect: language === "en" ? "" : dialect ?? "",
         gender: gender ?? "",
-        protoType: "Full_prompt",
         gptModel,
         temperature,
       };
@@ -1363,13 +1362,23 @@ useEffect(() => {
                               </pre>
                             </div>
 
-                            {/* Style */}
+                            {/* Submission Prompt — stored on the prompt but not
+                                part of what is sent to the model, because the
+                                live app has never included it. Labelled so the
+                                breakdown is not read as "this text was used". */}
                             <div>
                               <h5 className="text-sm sm:text-base font-semibold text-gray-100 mb-1">
-                                Submission Prompt
+                                Submission Prompt{" "}
+                                <span className="font-normal text-amber-400/90">
+                                  — not sent to the model
+                                </span>
                               </h5>
+                              <p className="text-xs text-gray-500 mb-1">
+                                Saved on the prompt, but the live app does not
+                                include it, so the tester excludes it too.
+                              </p>
                               <pre className="whitespace-pre-wrap text-gray-300">
-                                {aiInput.subPrmpt}
+                                {aiInput.subPrmpt || "—"}
                               </pre>
                             </div>
 

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { getApi } from "../utils/api";
 import { URLS } from "../utils/urls";
 
-export type AIProvider = "OPENAI" | "GEMINI";
+export type AIProvider = "OPENAI" | "GEMINI" | "OPENROUTER";
 
 interface AIProviderContextType {
   provider: AIProvider | null;
@@ -22,6 +22,11 @@ export const AIProviderProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   const fetchProvider = async () => {
+    // This endpoint needs an admin token. On the login screen there isn't one
+    // yet, so firing it anyway produced two 401s in the console on every first
+    // load and looked like a broken app.
+    if (!localStorage.getItem("token")) return;
+
     try {
       setLoading(true);
       const response = await getApi(URLS.getAISettings);
