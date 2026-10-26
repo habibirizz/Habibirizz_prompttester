@@ -41,6 +41,29 @@ const getDefaultProviderModels = (): ProviderModels => ({
   OPENROUTER: defaultModelFor("OPENROUTER"),
 });
 
+/**
+ * Fields that hold a document id, which must not survive as a legacy slug.
+ *
+ * These used to be stored as values like "short" and are now ids. A browser
+ * that kept the old shape sent "short" where an id was expected, so the
+ * backend rejected the whole request with "Cast to ObjectId failed for value
+ * \"short\"" while the dropdown showed nothing selected — the state and the
+ * visible selection had drifted apart.
+ */
+const ID_FIELDS = ["scenarioCategory", "conversationLength"] as const;
+const isObjectId = (v: unknown): v is string =>
+  typeof v === "string" && /^[0-9a-f]{24}$/i.test(v);
+
+function dropStaleIds<T extends Record<string, any>>(settings: T): T {
+  const cleaned = { ...settings };
+  for (const field of ID_FIELDS) {
+    if (cleaned[field] && !isObjectId(cleaned[field])) {
+      (cleaned as Record<string, any>)[field] = "";
+    }
+  }
+  return cleaned;
+}
+
 const getDefaultSettings = (provider: AIProvider | null): ConvoGeneratorSettings => ({
   gptModel: getDefaultModel(provider),
   temperature: 1,
@@ -81,7 +104,7 @@ export const ConvoGeneratorProvider: React.FC<{ children: ReactNode }> = ({ chil
         const models = parsedSettings.providerModels || getDefaultProviderModels();
         
         // Use the stored model for the current provider if available
-        return {
+        return dropStaleIds({
           ...getDefaultSettings(provider),
           ...parsedSettings,
           // ?? the default: a provider with no stored entry (OPENROUTER was
@@ -89,7 +112,7 @@ export const ConvoGeneratorProvider: React.FC<{ children: ReactNode }> = ({ chil
           gptModel: provider
             ? models[provider] ?? getDefaultModel(provider)
             : parsedSettings.gptModel || getDefaultModel(provider),
-        };
+        });
       } catch {
         return getDefaultSettings(provider);
       }
