@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAIProvider } from './AIProviderContext';
+import type { AIProvider } from './AIProviderContext';
+import { defaultModelFor, modelMatchesProvider } from '../utils/modelId';
 
 interface ConvoGeneratorSettings {
   gptModel: string; // This will be the currently active model based on provider
@@ -18,6 +20,7 @@ interface ConvoGeneratorSettings {
 interface ProviderModels {
   OPENAI: string;
   GEMINI: string;
+  OPENROUTER: string;
 }
 
 interface StoredSettings extends ConvoGeneratorSettings {
@@ -30,17 +33,15 @@ interface ConvoGeneratorContextType {
   resetConvoSettings: () => void;
 }
 
-const getDefaultModel = (provider: "OPENAI" | "GEMINI" | null): string => {
-  if (provider === "GEMINI") return "gemini-2.0-flash";
-  return "gpt-4o-mini";
-};
+const getDefaultModel = defaultModelFor;
 
 const getDefaultProviderModels = (): ProviderModels => ({
-  OPENAI: "gpt-4o-mini",
-  GEMINI: "gemini-2.0-flash",
+  OPENAI: defaultModelFor("OPENAI"),
+  GEMINI: defaultModelFor("GEMINI"),
+  OPENROUTER: defaultModelFor("OPENROUTER"),
 });
 
-const getDefaultSettings = (provider: "OPENAI" | "GEMINI" | null): ConvoGeneratorSettings => ({
+const getDefaultSettings = (provider: AIProvider | null): ConvoGeneratorSettings => ({
   gptModel: getDefaultModel(provider),
   temperature: 1,
   language: 'english',
@@ -83,7 +84,11 @@ export const ConvoGeneratorProvider: React.FC<{ children: ReactNode }> = ({ chil
         return {
           ...getDefaultSettings(provider),
           ...parsedSettings,
-          gptModel: provider ? models[provider] : parsedSettings.gptModel || getDefaultModel(provider),
+          // ?? the default: a provider with no stored entry (OPENROUTER was
+          // missing from ProviderModels) otherwise left gptModel undefined.
+          gptModel: provider
+            ? models[provider] ?? getDefaultModel(provider)
+            : parsedSettings.gptModel || getDefaultModel(provider),
         };
       } catch {
         return getDefaultSettings(provider);
@@ -99,14 +104,10 @@ export const ConvoGeneratorProvider: React.FC<{ children: ReactNode }> = ({ chil
       const rememberedModel = providerModels[provider];
       
       // Only update if the current model doesn't match the provider
-      const isCorrectProvider = 
-        (provider === "GEMINI" && settings.gptModel.includes("gemini")) ||
-        (provider === "OPENAI" && settings.gptModel.includes("gpt"));
-      
-      if (!isCorrectProvider) {
+      if (!modelMatchesProvider(settings.gptModel, provider)) {
         setSettings(prev => ({
           ...prev,
-          gptModel: rememberedModel,
+          gptModel: rememberedModel ?? getDefaultModel(provider),
         }));
       }
     }

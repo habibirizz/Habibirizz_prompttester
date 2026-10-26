@@ -34,3 +34,35 @@ export const toCatalogId = (
 /** Restrict the picker to the active provider's own models. */
 export const catalogPrefixFor = (provider: AIProvider | null): string | undefined =>
   provider && provider !== "OPENROUTER" ? PREFIX[provider] : undefined;
+
+/**
+ * The model to use when nothing has been chosen for a provider yet.
+ *
+ * "gemini-2.0-flash" was the old default and has been retired — it is not
+ * offered by any provider, so the generators failed with it preselected.
+ */
+export const defaultModelFor = (provider: AIProvider | null): string => {
+  if (provider === "OPENROUTER") return "google/gemini-3-flash-preview";
+  if (provider === "GEMINI") return "gemini-3-flash-preview";
+  return "gpt-4o-mini";
+};
+
+/**
+ * Whether a stored model belongs to the active provider.
+ *
+ * OpenRouter ids are namespaced ("google/gemini-3-flash-preview"); the direct
+ * providers take a bare name. Tolerates an undefined model, which is how the
+ * generators used to crash: providerModels had no OPENROUTER entry, so the
+ * lookup returned undefined and `.includes` threw with no error boundary,
+ * blanking the whole app.
+ */
+export const modelMatchesProvider = (
+  model: string | undefined,
+  provider: AIProvider | null,
+): boolean => {
+  if (!model || !provider) return false;
+  if (provider === "OPENROUTER") return model.includes("/");
+  if (model.includes("/")) return false;
+  if (provider === "GEMINI") return model.includes("gemini");
+  return model.includes("gpt");
+};
