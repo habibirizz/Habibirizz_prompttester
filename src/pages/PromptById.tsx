@@ -606,7 +606,16 @@ function PromptById({
 
   const simpleFields = ["title", "key", "generation", "persona"];
   const textareaFields = ["role"];
-  const textareaFields2 = ["submissionPrompt"];
+  // submissionPrompt is intentionally not editable here. It is stored on the
+  // prompt but never reaches the model on this collection: admin-service reads
+  // it only to return it in the inspector payload, and prompt-builder's
+  // includeSubmissionPrompt defaults to false with no caller enabling it.
+  // Editing it had no effect on output, which wasted time and invited the
+  // assumption that it was tuning something.
+  //
+  // The conversation prompt is different — ConversationPromptEditor still
+  // exposes its submissionPrompt, because that one IS interpolated into the
+  // generated prompt (admin-service "- Submission Prompt ${subPrmpt}").
 
   const accordionFields = ["messageTypes", "languages", "dialects", "styles"];
 
@@ -703,50 +712,6 @@ function PromptById({
               </motion.div>
             ))}
 
-            {textareaFields2.map((field) => (
-              <motion.div
-                key={field}
-                variants={itemVariants}
-                className="mb-4 sm:mb-6"
-              >
-                <div className="p-2 sm:p-3 bg-gray-800 rounded-lg border border-gray-600">
-                  <motion.div
-                    onClick={() => toggleAccordion(field)}
-                    whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-base sm:text-lg font-semibold text-gray-100 capitalize text-left">
-                        {field
-                          .replace(/([A-Z])/g, " $1")
-                          .replace(/_/g, " ")
-                          .trim()}
-                      </h4>
-                      <motion.span
-                        animate={{ rotate: openAccordions[field] ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-gray-400"
-                      >
-                        ▼
-                      </motion.span>
-                    </div>
-                  </motion.div>
-
-                  {openAccordions[field] && (
-                    <div className="pt-3">
-                      {renderInputField(
-                        field,
-                        formData[field] || "",
-                        (value) => handleInputChange(field, value),
-                        true,
-                        excludedFields.includes(field),
-                        true
-                      )}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
 
             <div className="flex flex-row justify-between">
               {isModified ? (

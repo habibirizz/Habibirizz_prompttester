@@ -451,12 +451,9 @@ const renderInputField = (
           {renderNestedFields("dialects", formData.dialects)}
           {renderNestedFields("styles", formData.styles)}
 
-             {renderInputField(
-            "Submission Prompt",
-            formData.submissionPrompt,
-            (val) => handleInputChange("submissionPrompt", val),
-            true
-          )}
+          {/* No Submission Prompt field: it is stored but never reaches the
+              model on this collection, so editing it changed nothing. The
+              conversation prompt keeps its own, which IS sent. */}
 
         </>
       )}
