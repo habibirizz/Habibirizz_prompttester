@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getApi, postApi } from "../utils/api";
 import ModelPicker from "../components/ModelPicker";
-import { catalogPrefixFor, toCatalogId, toProviderModelId } from "../utils/modelId";
+import {
+  catalogPrefixFor,
+  defaultModelFor,
+  modelMatchesProvider,
+  toCatalogId,
+  toProviderModelId,
+} from "../utils/modelId";
 import { URLS } from "../utils/urls";
 import { toast } from "sonner";
 import ConversationPromptEditor from "../utils/ConversationPromptEditor";
@@ -35,10 +41,10 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   const [isGenZ, setIsGenZ] = useState(settings.isGenZ);
   const [gptModel, setGptModel] = useState(() => {
     if (providerLoading) return "";
-
-    if (provider === "GEMINI") return "gemini-3.8-flash";
-    if (provider === "OPENAI") return settings.gptModel || "gpt-4o-mini";
-    return "gemini-3.8-flash";
+    // The per-provider default lives in one place now; "gemini-3.8-flash" was
+    // hardcoded here and is offered by no provider, so it arrived preselected
+    // and every generation failed with "not a valid model ID".
+    return settings.gptModel || defaultModelFor(provider);
   });
   const [temperature, setTemperature] = useState(settings.temperature);
 
@@ -332,14 +338,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   // Sync gptModel with provider on mount and when provider changes
   useEffect(() => {
     if (!providerLoading && provider) {
-      const defaultModel =
-        provider === "GEMINI" ? "gemini-3.8-flash" : "gpt-4o-mini";
-
-      if (
-        !gptModel ||
-        (provider === "GEMINI" && !gptModel.includes("gemini")) ||
-        (provider === "OPENAI" && !gptModel.includes("gpt"))
-      ) {
+      // Covers OPENROUTER too, which the old comparison ignored entirely.
+      if (!modelMatchesProvider(gptModel, provider)) {
+        const defaultModel = defaultModelFor(provider);
         setGptModel(defaultModel);
         updateSettings({ gptModel: defaultModel });
       }
@@ -349,13 +350,9 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
   // Sync gptModel when provider changes
   useEffect(() => {
     if (!providerLoading && provider && gptModel) {
-      const defaultModel =
-        provider === "GEMINI" ? "gemini-3.8-flash" : "gpt-4o-mini";
+      const defaultModel = defaultModelFor(provider);
 
-      if (
-        (provider === "GEMINI" && !gptModel.includes("gemini")) ||
-        (provider === "OPENAI" && !gptModel.includes("gpt"))
-      ) {
+      if (!modelMatchesProvider(gptModel, provider)) {
         setGptModel(defaultModel);
         updateSettings({ gptModel: defaultModel });
       }
@@ -712,7 +709,7 @@ const ConvoGenerator: React.FC<ConvoGeneratorProps> = ({
               }}
             >
               <label className="block text-sm font-medium text-gray-300 mb-2 text-start">
-                {provider && provider === "OPENAI" ? "GPT Model" : "Gemini Model"}
+                Model
               </label>
               <ModelPicker
                 label=""
